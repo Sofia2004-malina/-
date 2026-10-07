@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Зеленодольск — онлайн-путеводитель</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f4f7f5;
+    color: #2c3e2f;
+    line-height: 1.6;
+  }
+
+  /* Шапка */
+  header {
+    background: linear-gradient(135deg, #2e7d32, #66bb6a);
+    color: #fff;
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  header h1 { font-size: 2.2em; margin-bottom: 8px; }
+  header p { font-size: 1.1em; opacity: 0.95; }
+
+  /* Поиск и фильтры */
+  .controls {
+    max-width: 1000px;
+    margin: 25px auto;
+    padding: 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .controls input, .controls select {
+    padding: 10px 14px;
+    border: 2px solid #a5d6a7;
+    border-radius: 8px;
+    font-size: 1em;
+    outline: none;
+    transition: border 0.2s;
+  }
+  .controls input:focus, .controls select:focus { border-color: #2e7d32; }
+  .controls input { flex: 1; min-width: 220px; }
+
+  /* Сетка карточек */
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.25s, box-shadow 0.25s;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  }
+
+  .card-img {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5em;
+    color: #fff;
+  }
+  /* Цвета для разных категорий */
+  .cat-museum   { background: linear-gradient(135deg, #8e24aa, #ba68c8); }
+  .cat-monument { background: linear-gradient(135deg, #1565c0, #42a5f5); }
+  .cat-temple   { background: linear-gradient(135deg, #ef6c00, #ffb74d); }
+  .cat-nature   { background: linear-gradient(135deg, #2e7d32, #81c784); }
+
+  .card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+  .card-body h3 { font-size: 1.15em; margin-bottom: 8px; color: #1b5e20; }
+  .card-body .tag {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 0.75em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .card-body p { font-size: 0.93em; color: #555; flex: 1; }
+  .card-body .info {
+    margin-top: 12px;
+    font-size: 0.85em;
+    color: #777;
+    border-top: 1px dashed #ddd;
+    padding-top: 10px;
+  }
+  .card-body .info span { display: block; margin-bottom: 3px; }
+
+  /* Подвал */
+  footer {
+    background: #1b5e20;
+    color: #c8e6c9;
+    text-align: center;
+    padding: 20px;
+    font-size: 0.9em;
+  }
+
+  /* Сообщение "ничего не найдено" */
+  .no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-size: 1.1em;
+  }
+
+  @media (max-width: 500px) {
+    header h1 { font-size: 1.6em; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Зеленодольск</h1>
+  <p>Онлайн-путеводитель по достопримечательностям города</p>
+</header>
+
+<!-- Поиск и фильтр -->
+<div class="controls">
+  <input type="text" id="search" placeholder="🔍 Поиск по названию...">
+  <select id="filter">
+    <option value="all">Все категории</option>
+    <option value="museum">Музеи</option>
+    <option value="monument">Памятники</option>
+    <option value="temple">Храмы</option>
+    <option value="nature">Природа и отдых</option>
+  </select>
+</div>
+
+<!-- Сетка карточек -->
+<div class="grid" id="grid"></div>
+
+<footer>
+  <p>© 2025 · Проект ученика 4 класса · Город Зеленодольск, Республика Татарстан</p>
+</footer>
+
+<script>
+  // Данные о достопримечательностях
+  const places = [
+    {
+      name: "Музей историко-культурного наследия",
+      category: "museum",
+      icon: "🏛️",
+      desc: "Экспозиции об истории города, Романовском мосте и предметах крестьянского быта. Здесь можно узнать, как строился Зеленодольск.",
+      address: "ул. Первомайская, д. 20",
+      hours: "Вт–Сб: 09:00–17:00"
+    },
+    {
+      name: "Музей Константина Васильева",
+      category: "museum",
+      icon: "🎨",
+      desc: "Первый в России музей самобытного художника. Расположен в посёлке Васильево, хранит уникальные полотна мастера.",
+      address: "пос. Васильево",
+      hours: "Вт–Сб: 09:00–17:00"
+    },
+    {
+      name: "Музей народного творчества и этнографии",
+      category: "museum",
+      icon: "🧵",
+      desc: "Более 6000 экспонатов: золотое шитьё, керамика, кожаная мозаика. Знакомит с традициями татарского народа.",
+      address: "ул. Тургенева, д. 64",
+      hours: "Вт–Сб: 09:00–17:00"
+    },
+    {
+      name: "Памятник бронекатеру БКА-75",
+      category: "monument",
+      icon: "🚢",
+      desc: "Символ города. Катер построен на средства жителей в 1942 году и участвовал в Великой Отечественной войне.",
+      address: "ул. Гоголя, д. 134",
+      hours: "Круглосуточно"
+    },
+    {
+      name: "Романовский мост",
+      category: "monument",
+      icon: "🌉",
+      desc: "Уникальный железнодорожный мост начала XX века. В 1913 году был вторым в мире по длине пролёта.",
+      address: "район Приволжского вокзала",
+      hours: "Круглосуточно"
+    },
+    {
+      name: "Монумент Славы",
+      category: "monument",
+      icon: "🕯️",
+      desc: "Мемориал с Вечным огнём и плитами с именами павших воинов. Находится в центре города.",
+      address: "ул. Волгоградская",
+      hours: "Круглосуточно"
+    },
+    {
+      name: "Мечеть Тынычлык",
+      category: "temple",
+      icon: "🕌",
+      desc: "Мусульманский храм в национально-романтическом стиле. Высота минарета — 46 метров.",
+      address: "ул. Столичная, д. 2в",
+      hours: "08:00–20:00"
+    },
+    {
+      name: "Архитектурно-этнографический комплекс им. Каюма Насыри",
+      category: "temple",
+      icon: "🏡",
+      desc: "Усадьба татарского крестьянина XIX века. Связана с именем просветителя Каюма Насыри.",
+      address: "с. Большие Ачасыры",
+      hours: "По записи"
+    },
+    {
+      name: "Арт-объекты фестиваля «Елга»",
+      category: "nature",
+      icon: "✨",
+      desc: "Зеркальные инсталляции на ул. Гоголя и Солнечной, макет первого паровоза возле музея. Отличные места для фото!",
+      address: "ул. Гоголя, ул. Солнечная",
+      hours: "Круглосуточно"
+    }
+  ];
+
+  const grid = document.getElementById('grid');
+  const searchInput = document.getElementById('search');
+  const filterSelect = document.getElementById('filter');
+
+  const categoryNames = {
+    museum: "Музей",
+    monument: "Памятник",
+    temple: "Храм",
+    nature: "Природа"
+  };
+
+  // Отрисовка карточек
+  function render(items) {
+    grid.innerHTML = '';
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="no-results">😔 Ничего не найдено. Попробуй изменить запрос.</div>';
+      return;
+    }
+    items.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-img cat-${p.category}">${p.icon}</div>
+        <div class="card-body">
+          <span class="tag">${categoryNames[p.category] || p.category}</span>
+          <h3>${p.name}</h3>
+          <p>${p.desc}</p>
+          <div class="info">
+            <span>📍 ${p.address}</span>
+            <span>🕒 ${p.hours}</span>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Фильтрация
+  function applyFilters() {
+    const query = searchInput.value.toLowerCase().trim();
+    const cat = filterSelect.value;
+
+    const filtered = places.filter(p => {
+      const matchCat = cat === 'all' || p.category === cat;
+      const matchQuery = p.name.toLowerCase().includes(query) ||
+                         p.desc.toLowerCase().includes(query);
+      return matchCat && matchQuery;
+    });
+
+    render(filtered);
+  }
+
+  searchInput.addEventListener('input', applyFilters);
+  filterSelect.addEventListener('change', applyFilters);
+
+  // Первая отрисовка
+  render(places);
+</script>
+
+</body>
+</html>
